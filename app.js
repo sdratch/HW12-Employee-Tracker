@@ -35,6 +35,7 @@ function init() {
           "View All Department",
           "Add a Department",
           "Add a Role",
+          "Add an Employee",
           "Exit",
         ],
       },
@@ -50,8 +51,11 @@ function init() {
         case "View All Department":
           viewDepartment();
           break;
+        case "Add an Employee":
+          addEmployee();
+          break;
         case "Add a Department":
-          AddDepartment();
+          addDepartment();
           break;
         case "Add a Role":
           addRoles();
@@ -69,16 +73,86 @@ function viewEmployees() {
     from employee e
     inner join role on e.role_id = role.id
     inner join department on role.department_id = department.id
-    inner join employee m ON m.id = e.manager_id;`;
+    LEFT join employee m ON m.id = e.manager_id
+    order by e.id;`;
   connection.query(queryString, (err, res) => {
     if (err) throw err;
     formatEmployees(res);
   });
 }
+
+function addEmployee() {
+  let queryString = `select * from employee;`;
+  connection.query(queryString, (err, employee) => {
+    if (err) throw err;
+    queryString = `select * from role;`;
+    connection.query(queryString, (err, role) => {
+      if (err) throw err;
+
+      let roleTitle = [];
+      for (let i = 0; i < role.length; i++) {
+        roleTitle.push(role[i].title);
+      }
+      let employeeName = [];
+      for (let i = 0; i < employee.length; i++) {
+        employeeName.push(
+          employee[i].first_name + ", " + employee[i].last_name
+        );
+      }
+      employeeName.push("No one")
+      inquirer
+        .prompt([
+          {
+            type: "input",
+            name: "firstName",
+            message: "Enter employee's first name",
+          },
+          {
+            type: "input",
+            name: "lastName",
+            message: "Enter employee's first name",
+          },
+          {
+            type: "list",
+            name: "newRole",
+            message: "Enter employee's role",
+            choices: roleTitle,
+          },
+          {
+            type: "list",
+            name: "manager",
+            message: "Enter employee's mangaer",
+            choices: employeeName,
+          },
+        ])
+        .then(({ firstName, lastName, newRole, manager }) => {
+          let managerId = employee.filter(
+            (obj) => obj.first_name + ", " + obj.last_name === manager
+          );
+          if(managerId.length === 0){
+            managerId = null;
+          } else{
+            managerId = managerId[0].id;
+          }
+          const roleId = role.filter((obj) => obj.title === newRole)[0].id;
+          queryString = `insert into employee(first_name,last_name,role_id,manager_id) values(?,?,?,?)`;
+          connection.query(
+            queryString,
+            [firstName, lastName, roleId, managerId],
+            (err) => {
+              if (err) throw err;
+              init();
+            });
+        });
+    });
+  });
+}
+
 function viewRoles() {
   let queryString = `select role.id,title,name,salary
     from role
-    inner join department on role.department_id = department.id;`;
+    inner join department on role.department_id = department.id
+    order by role.id;`;
   connection.query(queryString, (err, res) => {
     if (err) throw err;
     formatRoles(res);
@@ -112,19 +186,25 @@ function addRoles() {
             },
           ])
           .then(({ department }) => {
-            const departmentId = res.filter((obj) => obj.name === department)[0].id
-              console.log(departmentId)
+            const departmentId = res.filter((obj) => obj.name === department)[0]
+              .id;
+            console.log(departmentId);
             let queryString = `insert into role(title,salary,department_id) values(?,?,?)`;
-            connection.query(queryString, [title,salary,departmentId], (err) => {
-              if (err) throw err;
-              init();
-            });
+            connection.query(
+              queryString,
+              [title, salary, departmentId],
+              (err) => {
+                if (err) throw err;
+                init();
+              }
+            );
           });
       });
     });
 }
 function viewDepartment() {
-  let queryString = `select * from department;`;
+  let queryString = `select * from department
+  order by id;`;
   connection.query(queryString, (err, res) => {
     if (err) throw err;
     formatDepartment(res);
