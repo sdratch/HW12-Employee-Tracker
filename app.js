@@ -23,21 +23,20 @@ connection.connect((err) => {
   init()
 });
 
-
-
-
 function init(){
     inquirer.prompt([{
         type:"list",
         name:"result",
         message:"What option would you like to preform?",
-        choices:["View All Employees","View All Roles","View All Department","Exit"]
+        choices:["View All Employees","View All Roles","View All Department",
+        "Add a Department","Exit"]
     }]).then((data)=>{
 
         switch(data.result){
             case "View All Employees": viewEmployees(); break;
             case "View All Roles": viewRoles(); break;
             case "View All Department": viewDepartment(); break;
+            case "Add a Department": AddDepartment();break;
             case "Exit": connection.end();break;
         }
     })
@@ -51,6 +50,7 @@ function viewEmployees(){
     inner join department on role.department_id = department.id
     inner join employee m ON m.id = e.manager_id;`
     connection.query(queryString,(err,res)=>{
+        if(err) throw err
         formatEmployees(res)
     })
 }
@@ -59,15 +59,31 @@ function viewRoles(){
     from role
     inner join department on role.department_id = department.id;`
     connection.query(queryString,(err,res)=>{
+        if(err) throw err
         formatRoles(res)
     })
 }
 function viewDepartment(){
     let queryString = `select * from department;`
     connection.query(queryString,(err,res)=>{
+        if(err) throw err
         formatDepartment(res)
     })
 }
+function AddDepartment(){
+    inquirer.prompt([{
+        type:"input",
+        name:"name",
+        message:"Enter name of new department"
+    }]).then(({name}) =>{
+        let queryString = `insert into department(name) values(?)`
+        connection.query(queryString,[name],(err)=>{
+            if(err) throw err
+            init()
+        })
+    })
+}
+
 function formatEmployees(res){
     let table = new Table;
     res.forEach((employee) =>{
