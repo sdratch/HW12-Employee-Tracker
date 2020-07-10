@@ -20,8 +20,26 @@ const connection = mysql.createConnection({
 connection.connect((err) => {
   if (err) throw err;
   console.log("connected as id " + connection.threadId);
-  viewEmployees()
+  init()
 });
+
+
+
+
+function init(){
+    inquirer.prompt([{
+        type:"list",
+        name:"result",
+        message:"What option would you like to preform?",
+        choices:["View All Employees","Exit"]
+    }]).then((data)=>{
+
+        switch(data.result){
+            case "View All Employees": viewEmployees(); break;
+            case "Exit": connection.end();break;
+        }
+    })
+}
 
 function viewEmployees(){
     let queryString = `select e.id,e.first_name,e.last_name,title,name,salary,
@@ -50,5 +68,6 @@ function formatTable(res){
       table.newRow()
   })
   console.log(table.toString())
+  init()
 }
 //id,fn,ln,title,dep,sal,man
