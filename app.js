@@ -31,11 +31,12 @@ function init(){
         type:"list",
         name:"result",
         message:"What option would you like to preform?",
-        choices:["View All Employees","Exit"]
+        choices:["View All Employees","View All Roles","Exit"]
     }]).then((data)=>{
 
         switch(data.result){
             case "View All Employees": viewEmployees(); break;
+            case "View All Roles": viewRoles(); break;
             case "Exit": connection.end();break;
         }
     })
@@ -48,26 +49,52 @@ function viewEmployees(){
     inner join role on e.role_id = role.id
     inner join department on role.department_id = department.id
     inner join employee m ON m.id = e.manager_id;`
-
     connection.query(queryString,(err,res)=>{
-        formatTable(res)
-        
+        formatEmployees(res)
     })
 }
-
-function formatTable(res){
-  let table = new Table;
-  res.forEach((employee) =>{
-      table.cell('id',employee.id)
-      table.cell('First Name',employee.first_name)
-      table.cell('Last Name',employee.last_name)
-      table.cell('Title',employee.title)
-      table.cell('Department',employee.name)
-      table.cell('Salary',employee.salary)
-      table.cell('Manager',employee.manager)
-      table.newRow()
-  })
-  console.log(table.toString())
-  init()
+function viewRoles(){
+    let queryString = `select role.id,title,name,salary
+    from role
+    inner join department on role.department_id = department.id;`
+    connection.query(queryString,(err,res)=>{
+        formatRoles(res)
+    })
 }
-//id,fn,ln,title,dep,sal,man
+function formatEmployees(res){
+    let table = new Table;
+    res.forEach((employee) =>{
+        table.cell('id',employee.id)
+        table.cell('First Name',employee.first_name)
+        table.cell('Last Name',employee.last_name)
+        table.cell('Title',employee.title)
+        table.cell('Department',employee.name)
+        table.cell('Salary',employee.salary)
+        table.cell('Manager',employee.manager)
+        table.newRow()
+    })
+    console.log(table.toString())
+    init()
+}
+function formatRoles(res){
+    let table = new Table;
+    res.forEach((role) =>{
+        table.cell('id',role.id)
+        table.cell('Title',role.title)
+        table.cell('Department',role.name)
+        table.cell('Salary',role.salary)
+        table.newRow()
+    })
+    console.log(table.toString())
+    init()
+}
+function formatDepartment(res){
+    let table = new Table;
+    res.forEach((department) =>{
+        table.cell('id',department.id)
+        table.cell('Department',department.name)
+        table.newRow()
+    })
+    console.log(table.toString())
+    init()
+}
