@@ -31,12 +31,13 @@ function init(){
         type:"list",
         name:"result",
         message:"What option would you like to preform?",
-        choices:["View All Employees","View All Roles","Exit"]
+        choices:["View All Employees","View All Roles","View All Department","Exit"]
     }]).then((data)=>{
 
         switch(data.result){
             case "View All Employees": viewEmployees(); break;
             case "View All Roles": viewRoles(); break;
+            case "View All Department": viewDepartment(); break;
             case "Exit": connection.end();break;
         }
     })
@@ -59,6 +60,12 @@ function viewRoles(){
     inner join department on role.department_id = department.id;`
     connection.query(queryString,(err,res)=>{
         formatRoles(res)
+    })
+}
+function viewDepartment(){
+    let queryString = `select * from department;`
+    connection.query(queryString,(err,res)=>{
+        formatDepartment(res)
     })
 }
 function formatEmployees(res){
