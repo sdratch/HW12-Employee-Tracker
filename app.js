@@ -36,6 +36,7 @@ function init() {
           "Add a Department",
           "Add a Role",
           "Add an Employee",
+          "Update an Employee's Role",
           "Exit",
         ],
       },
@@ -59,6 +60,9 @@ function init() {
           break;
         case "Add a Role":
           addRoles();
+          break;
+        case "Update an Employee's Role":
+          updateEmployeeRole();
           break;
         case "Exit":
           connection.end();
@@ -99,7 +103,7 @@ function addEmployee() {
           employee[i].first_name + ", " + employee[i].last_name
         );
       }
-      employeeName.push("No one")
+      employeeName.push("No one");
       inquirer
         .prompt([
           {
@@ -129,9 +133,9 @@ function addEmployee() {
           let managerId = employee.filter(
             (obj) => obj.first_name + ", " + obj.last_name === manager
           );
-          if(managerId.length === 0){
+          if (managerId.length === 0) {
             managerId = null;
-          } else{
+          } else {
             managerId = managerId[0].id;
           }
           const roleId = role.filter((obj) => obj.title === newRole)[0].id;
@@ -142,12 +146,59 @@ function addEmployee() {
             (err) => {
               if (err) throw err;
               init();
-            });
+            }
+          );
         });
     });
   });
 }
-
+function updateEmployeeRole() {
+  let queryString = `select * from employee;`;
+  connection.query(queryString, (err, employeeList) => {
+    queryString = `select * from role;`;
+    connection.query(queryString, (err, role) => {
+      let roleTitle = [];
+      for (let i = 0; i < role.length; i++) {
+        roleTitle.push(role[i].title);
+      }
+      let employeeName = [];
+      for (let i = 0; i < employeeList.length; i++) {
+        employeeName.push(
+          employeeList[i].first_name + ", " + employeeList[i].last_name
+        );
+      }
+      inquirer
+        .prompt([
+          {
+            type: "list",
+            name: "employee",
+            message: "Which employee do you wish to update",
+            choices: employeeName,
+          },
+          {
+            type: "list",
+            name: "newRole",
+            message: "What is their new role",
+            choices: roleTitle,
+          },
+        ])
+        .then(({ employee, newRole }) => {
+          const employeeId = employeeList.filter(
+            (obj) => obj.first_name + ", " + obj.last_name === employee
+          )[0].id;
+          const roleId = role.filter((obj) => obj.title === newRole)[0].id;
+          console.log(employeeId), console.log(roleId);
+          queryString = `update employee
+        set role_id = ?
+        WHERE id = ? `;
+          connection.query(queryString, [employeeId, roleId], (err) => {
+            if (err) throw err;
+            init();
+          });
+        });
+    });
+  });
+}
 function viewRoles() {
   let queryString = `select role.id,title,name,salary
     from role
